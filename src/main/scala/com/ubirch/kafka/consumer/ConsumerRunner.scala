@@ -39,8 +39,6 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
 
   implicit lazy val scheduler: Scheduler = monix.execution.Scheduler(ec)
 
-  lazy val futureHelper = new FutureHelper()
-
   override val version: AtomicInteger = ConsumerRunner.version
   //This one is made public for testing purposes
   @BeanProperty val isPaused: AtomicBoolean = new AtomicBoolean(false)
@@ -199,7 +197,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
                   throw MaxNumberOfCommitAttemptsException("Error Committing", s"$commitAttempts attempts were performed. But none worked. Escalating ...", Left(e))
                 } else {
                   try {
-                    futureHelper.delay(getMaxCommitAttemptBackoff)(e.commitFunc())
+                    FutureHelper.delay(getMaxCommitAttemptBackoff)(e.commitFunc())
                     break()
                   } catch {
                     case _: CommitTimeoutException =>

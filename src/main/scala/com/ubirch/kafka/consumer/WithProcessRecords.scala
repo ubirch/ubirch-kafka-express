@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{ CountDownLatch, TimeUnit }
 
 import com.ubirch.kafka.util.Exceptions._
+import com.ubirch.kafka.util.FutureHelper
 import com.ubirch.kafka.util.Implicits._
 import org.apache.kafka.clients.consumer.{ OffsetAndMetadata, _ }
 import org.apache.kafka.common.TopicPartition
@@ -126,7 +127,7 @@ trait WithProcessRecords[K, V] {
     def start() {
       processRecords(consumerRecords.iterator().asScala.toVector)
       if (getDelayRecords > 0.millis) {
-        futureHelper.delay(getDelayRecords)(())
+        FutureHelper.delay(getDelayRecords)(())
       }
     }
 
