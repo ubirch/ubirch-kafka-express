@@ -64,7 +64,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
 
   private val postConsumeCallback = new Callback[Int, Unit] {}
 
-  protected val postCommitCallback = new Callback[Int, Unit] {}
+  protected val postCommitCallback: Callback[Int, Unit] = new Callback[Int, Unit] {}
 
   private val needForPauseCallback = new Callback[(FiniteDuration, Int), Unit] {}
 
@@ -104,7 +104,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
 
   @BeanProperty var forceExit: Boolean = true
 
-  @BeanProperty var maxTimeAggregationSeconds: Long = 20
+  @BeanProperty var maxTimeAggregationSeconds: Long = 120
 
   protected var consumer: Consumer[K, V] = _
 

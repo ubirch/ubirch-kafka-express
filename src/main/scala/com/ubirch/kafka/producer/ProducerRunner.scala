@@ -83,7 +83,7 @@ abstract class ProducerRunner[K, V] extends VersionedLazyLogging {
 
   }
 
-  def close(timout: FiniteDuration) = {
+  def close(timout: FiniteDuration): Unit = {
     getProducerAsOpt
       .map(_.close(java.time.Duration.ofMillis(timout.toMillis)))
       .getOrElse(Unit)

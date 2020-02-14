@@ -2,6 +2,8 @@ package com.ubirch.kafka.util
 
 import java.util.concurrent.{ CountDownLatch, TimeUnit, Future => JavaFuture }
 
+import monix.execution.Scheduler
+
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.{ Await, ExecutionContext, Future, blocking }
 
@@ -10,7 +12,7 @@ import scala.concurrent.{ Await, ExecutionContext, Future, blocking }
   */
 class FutureHelper()(implicit ec: ExecutionContext) {
 
-  val scheduler = monix.execution.Scheduler(ec)
+  val scheduler: Scheduler = monix.execution.Scheduler(ec)
 
   def withBlock[T](f: () => T): Future[T] = {
     Future {

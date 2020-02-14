@@ -68,9 +68,9 @@ trait WithProcessRecords[K, V] {
       val consumerRecords: ConsumerRecords[K, V]
   ) extends ProcessRecordsBase {
 
-    protected lazy val partitionRecords = consumerRecords.records(currentPartition).asScala.toVector
+    protected lazy val partitionRecords: Vector[ConsumerRecord[K, V]] = consumerRecords.records(currentPartition).asScala.toVector
 
-    protected lazy val partitionRecordsSize = partitionRecords.size
+    protected lazy val partitionRecordsSize: Int = partitionRecords.size
 
     override protected val batchCountDownSize: Int = partitionRecordsSize
 

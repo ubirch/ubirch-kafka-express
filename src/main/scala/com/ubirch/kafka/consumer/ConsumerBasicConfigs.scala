@@ -1,6 +1,7 @@
 package com.ubirch.kafka.consumer
 
 import com.typesafe.scalalogging.LazyLogging
+import com.ubirch.kafka.util.ConfigProperties
 import org.apache.kafka.clients.consumer.{ ConsumerConfig, OffsetResetStrategy }
 import org.apache.kafka.common.serialization.Deserializer
 
@@ -29,7 +30,7 @@ trait ConsumerBasicConfigs extends LazyLogging {
 
   def consumerReconnectBackoffMaxMsConfig: Long
 
-  def consumerConfigs = {
+  def consumerConfigs: ConfigProperties = {
     val cfs = Configs(
       bootstrapServers = consumerBootstrapServers,
       groupId = consumerGroupId,

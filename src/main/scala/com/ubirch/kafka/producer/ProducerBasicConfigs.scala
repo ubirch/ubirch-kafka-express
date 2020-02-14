@@ -1,5 +1,6 @@
 package com.ubirch.kafka.producer
 
+import com.ubirch.kafka.util.ConfigProperties
 import org.apache.kafka.common.serialization.Serializer
 
 trait WithSerializer[K, V] {
@@ -13,6 +14,6 @@ trait ProducerBasicConfigs {
 
   def lingerMs: Int
 
-  def producerConfigs = Configs(producerBootstrapServers, lingerMs = lingerMs)
+  def producerConfigs: ConfigProperties = Configs(producerBootstrapServers, lingerMs = lingerMs)
 
 }
