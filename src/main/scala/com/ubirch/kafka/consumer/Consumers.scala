@@ -18,9 +18,7 @@ object StringConsumer {
   def empty(implicit ec: ExecutionContext): StringConsumer = new StringConsumer() {}
 
   def emptyWithMetrics(prefix: String, metricsSubNamespace: String)(implicit ec: ExecutionContext): StringConsumer = new StringConsumer() with WithMetrics {
-
     override def prefixNamespace: String = prefix
-
     override def metricsSubNamespaceLabel: String = metricsSubNamespace
   }
 
@@ -34,7 +32,7 @@ object StringConsumer {
 
   def controllerBased(controller: ConsumerRecordsController[String, String])(implicit ec: ExecutionContext): StringConsumer = {
     val consumer = empty
-    consumer.setConsumerRecordsController(Some(controller))
+    consumer.withConsumerRecordsController(Some(controller))
     consumer
   }
 
@@ -68,7 +66,7 @@ object BytesConsumer {
 
   def controllerBased(controller: ConsumerRecordsController[String, Array[Byte]])(implicit ec: ExecutionContext): BytesConsumer = {
     val consumer = empty
-    consumer.setConsumerRecordsController(Some(controller))
+    consumer.withConsumerRecordsController(Some(controller))
     consumer
   }
 

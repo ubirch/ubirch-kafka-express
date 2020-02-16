@@ -44,10 +44,11 @@ class ConsumerRunnerSpec extends TestBase {
 
       }
 
-      consumer.setKeyDeserializer(Some(new StringDeserializer()))
-      consumer.setValueDeserializer(Some(new StringDeserializer()))
-      consumer.setForceExit(false) // We disable the ForceExit so that the Test doesn't exit
-      consumer.setProps(configs)
+        .withKeyDeserializer(Some(new StringDeserializer()))
+        .withValueDeserializer(Some(new StringDeserializer()))
+        .forceExit(false) // We disable the ForceExit so that the Test doesn't exit
+        .withProps(configs)
+
       consumer.startPolling()
 
       Thread.sleep(5000) // We wait here so the change is propagated
@@ -71,8 +72,9 @@ class ConsumerRunnerSpec extends TestBase {
 
       }
 
-      consumer.setForceExit(false) // We disable the ForceExit so that the Test doesn't exit
-      consumer.setProps(configs)
+        .forceExit(false) // We disable the ForceExit so that the Test doesn't exit
+        .withProps(configs)
+
       consumer.startPolling()
 
       Thread.sleep(10000) // We wait here so the change is propagated
@@ -89,10 +91,11 @@ class ConsumerRunnerSpec extends TestBase {
         }
       }
 
-      consumer.setKeyDeserializer(Some(new StringDeserializer()))
-      consumer.setValueDeserializer(Some(new StringDeserializer()))
-      consumer.setForceExit(false) // We disable the ForceExit so that the Test doesn't exit
-      consumer.setProps(Map.empty)
+        .withKeyDeserializer(Some(new StringDeserializer()))
+        .withValueDeserializer(Some(new StringDeserializer()))
+        .forceExit(false) // We disable the ForceExit so that the Test doesn't exit
+        .withProps(Map.empty[String, AnyRef])
+
       consumer.startPolling()
 
       Thread.sleep(5000) // We wait here so the change is propagated
@@ -133,12 +136,12 @@ class ConsumerRunnerSpec extends TestBase {
           }
         }
 
-        consumer.setKeyDeserializer(Some(new StringDeserializer()))
-        consumer.setValueDeserializer(Some(new StringDeserializer()))
-        consumer.setForceExit(false)
-        consumer.setTopics(Set(topic))
-        consumer.setProps(configs)
-        consumer.startPolling()
+          .withKeyDeserializer(Some(new StringDeserializer()))
+          .withValueDeserializer(Some(new StringDeserializer()))
+          .forceExit(false)
+          .withTopics(Set(topic))
+          .withProps(configs)
+          .startPolling()
 
         counter.await()
 
@@ -184,13 +187,13 @@ class ConsumerRunnerSpec extends TestBase {
           }
         }
 
-        consumer.setKeyDeserializer(Some(new StringDeserializer()))
-        consumer.setValueDeserializer(Some(new StringDeserializer()))
-        consumer.setTopics(Set(topic))
-        consumer.setProps(configs)
-        consumer.setForceExit(false)
-        consumer.setConsumptionStrategy(All)
-        consumer.startPolling()
+          .withKeyDeserializer(Some(new StringDeserializer()))
+          .withValueDeserializer(Some(new StringDeserializer()))
+          .withTopics(Set(topic))
+          .withProps(configs)
+          .forceExit(false)
+          .withConsumptionStrategy(All)
+          .startPolling()
 
         Thread.sleep(1000)
 
@@ -244,12 +247,12 @@ class ConsumerRunnerSpec extends TestBase {
           }
         }
 
-        consumerA.setKeyDeserializer(Some(new StringDeserializer()))
-        consumerA.setValueDeserializer(Some(new StringDeserializer()))
-        consumerA.setTopics(Set(topic))
-        consumerA.setProps(configs)
-        consumerA.setConsumptionStrategy(All)
-        consumerA.startPolling()
+          .withKeyDeserializer(Some(new StringDeserializer()))
+          .withValueDeserializer(Some(new StringDeserializer()))
+          .withTopics(Set(topic))
+          .withProps(configs)
+          .withConsumptionStrategy(All)
+          .startPolling()
 
         val consumerB = new ConsumerRunner[String, String]("cr-B") {
           override def process(consumerRecords: Vector[ConsumerRecord[String, String]]): Future[ProcessResult[String, String]] = {
@@ -263,12 +266,12 @@ class ConsumerRunnerSpec extends TestBase {
           }
         }
 
-        consumerB.setKeyDeserializer(Some(new StringDeserializer()))
-        consumerB.setValueDeserializer(Some(new StringDeserializer()))
-        consumerB.setTopics(Set(topic))
-        consumerB.setProps(configs)
-        consumerB.setConsumptionStrategy(All)
-        consumerB.startPolling()
+          .withKeyDeserializer(Some(new StringDeserializer()))
+          .withValueDeserializer(Some(new StringDeserializer()))
+          .withTopics(Set(topic))
+          .withProps(configs)
+          .withConsumptionStrategy(All)
+          .startPolling()
 
         Thread.sleep(1000)
 
@@ -321,12 +324,12 @@ class ConsumerRunnerSpec extends TestBase {
           }
         }
 
-        consumer.setKeyDeserializer(Some(new StringDeserializer()))
-        consumer.setValueDeserializer(Some(new StringDeserializer()))
-        consumer.setTopics(Set(topic))
-        consumer.setProps(configs)
-        consumer.setConsumptionStrategy(All)
-        consumer.startPolling()
+          .withKeyDeserializer(Some(new StringDeserializer()))
+          .withValueDeserializer(Some(new StringDeserializer()))
+          .withTopics(Set(topic))
+          .withProps(configs)
+          .withConsumptionStrategy(All)
+          .startPolling()
 
         Thread.sleep(1000)
 
@@ -369,10 +372,11 @@ class ConsumerRunnerSpec extends TestBase {
           }
         }
 
-        consumer.setKeyDeserializer(Some(new StringDeserializer()))
-        consumer.setValueDeserializer(Some(new StringDeserializer()))
-        consumer.setTopics(Set(topic))
-        consumer.setProps(configs)
+          .withKeyDeserializer(Some(new StringDeserializer()))
+          .withValueDeserializer(Some(new StringDeserializer()))
+          .withTopics(Set(topic))
+          .withProps(configs)
+
         consumer.startPolling()
 
         counter.await()
@@ -382,11 +386,11 @@ class ConsumerRunnerSpec extends TestBase {
 
         Thread.sleep(2000)
 
-        assert(consumer.getPausedHistory.get() >= 1)
+        assert(consumer.pausedHistory.get() >= 1)
 
         Thread.sleep(2000)
 
-        assert(consumer.getUnPausedHistory.get() >= 1)
+        assert(consumer.unPausedHistory.get() >= 1)
 
       }
     }
@@ -422,13 +426,13 @@ class ConsumerRunnerSpec extends TestBase {
           }
         }
 
-        consumer.setKeyDeserializer(Some(new StringDeserializer()))
-        consumer.setValueDeserializer(Some(new StringDeserializer()))
-        consumer.setForceExit(false)
-        consumer.setTopics(Set(topic))
-        consumer.setProps(configs)
-        consumer.setDelaySingleRecord(10 millis)
-        consumer.setDelayRecords(1000 millis)
+          .withKeyDeserializer(Some(new StringDeserializer()))
+          .withValueDeserializer(Some(new StringDeserializer()))
+          .forceExit(false)
+          .withTopics(Set(topic))
+          .withProps(configs)
+          .withDelaySingleRecord(10 millis)
+          .withDelayRecords(1000 millis)
 
         consumer.startPolling()
 
@@ -439,11 +443,11 @@ class ConsumerRunnerSpec extends TestBase {
 
         Thread.sleep(2000)
 
-        assert(consumer.getPausedHistory.get() >= 1)
+        assert(consumer.pausedHistory.get() >= 1)
 
         Thread.sleep(2000)
 
-        assert(consumer.getUnPausedHistory.get() >= 1)
+        assert(consumer.unPausedHistory.get() >= 1)
 
       }
 
@@ -496,12 +500,12 @@ class ConsumerRunnerSpec extends TestBase {
           }
         }
 
-        consumer.setKeyDeserializer(Some(new StringDeserializer()))
-        consumer.setValueDeserializer(Some(new StringDeserializer()))
-        consumer.setTopics(Set(topic))
-        consumer.setForceExit(false)
-        consumer.setProps(configs)
-        consumer.startPolling()
+          .withKeyDeserializer(Some(new StringDeserializer()))
+          .withValueDeserializer(Some(new StringDeserializer()))
+          .withTopics(Set(topic))
+          .forceExit(false)
+          .withProps(configs)
+          .startPolling()
 
         Thread.sleep(10000)
 
@@ -533,7 +537,7 @@ class ConsumerRunnerSpec extends TestBase {
           autoOffsetReset = OffsetResetStrategy.EARLIEST
         )
 
-        val consumer: ConsumerRunner[String, String] = new ConsumerRunner[String, String]("cr-8") {
+        new ConsumerRunner[String, String]("cr-8") {
 
           override def process(consumerRecords: Vector[ConsumerRecord[String, String]]): Future[ProcessResult[String, String]] = {
             Future.successful(processResult(consumerRecords))
@@ -549,12 +553,12 @@ class ConsumerRunnerSpec extends TestBase {
           }
         }
 
-        consumer.setKeyDeserializer(Some(new StringDeserializer()))
-        consumer.setValueDeserializer(Some(new StringDeserializer()))
-        consumer.setForceExit(false)
-        consumer.setTopics(Set(topic))
-        consumer.setProps(configs)
-        consumer.startPolling()
+          .withKeyDeserializer(Some(new StringDeserializer()))
+          .withValueDeserializer(Some(new StringDeserializer()))
+          .forceExit(false)
+          .withTopics(Set(topic))
+          .withProps(configs)
+          .startPolling()
 
         attempts.await()
         assert(attempts.getCount == 0)
@@ -584,7 +588,7 @@ class ConsumerRunnerSpec extends TestBase {
           autoOffsetReset = OffsetResetStrategy.EARLIEST
         )
 
-        val consumer: ConsumerRunner[String, String] = new ConsumerRunner[String, String]("cr-9") {
+        new ConsumerRunner[String, String]("cr-9") {
 
           override def process(consumerRecords: Vector[ConsumerRecord[String, String]]): Future[ProcessResult[String, String]] = {
             Future.successful(processResult(consumerRecords))
@@ -606,12 +610,12 @@ class ConsumerRunnerSpec extends TestBase {
           }
         }
 
-        consumer.setKeyDeserializer(Some(new StringDeserializer()))
-        consumer.setValueDeserializer(Some(new StringDeserializer()))
-        consumer.setForceExit(false)
-        consumer.setTopics(Set(topic))
-        consumer.setProps(configs)
-        consumer.startPolling()
+          .withKeyDeserializer(Some(new StringDeserializer()))
+          .withValueDeserializer(Some(new StringDeserializer()))
+          .forceExit(false)
+          .withTopics(Set(topic))
+          .withProps(configs)
+          .startPolling()
 
         attempts.await()
         assert(attempts.getCount == 0)
@@ -643,7 +647,7 @@ class ConsumerRunnerSpec extends TestBase {
           autoOffsetReset = OffsetResetStrategy.EARLIEST
         )
 
-        val consumer: ConsumerRunner[String, String] = new ConsumerRunner[String, String]("cr-9") {
+        new ConsumerRunner[String, String]("cr-9") {
 
           override def process(consumerRecords: Vector[ConsumerRecord[String, String]]): Future[ProcessResult[String, String]] = {
             Future.successful(processResult(consumerRecords))
@@ -666,12 +670,12 @@ class ConsumerRunnerSpec extends TestBase {
           }
         }
 
-        consumer.setKeyDeserializer(Some(new StringDeserializer()))
-        consumer.setValueDeserializer(Some(new StringDeserializer()))
-        consumer.setTopics(Set(topic))
-        consumer.setProps(configs)
-        consumer.onPostCommit(i => committedN = i)
-        consumer.startPolling()
+          .withKeyDeserializer(Some(new StringDeserializer()))
+          .withValueDeserializer(Some(new StringDeserializer()))
+          .withTopics(Set(topic))
+          .withProps(configs)
+          .onPostCommit(i => committedN = i)
+          .startPolling()
 
         committed.await()
         failedProcesses.await()

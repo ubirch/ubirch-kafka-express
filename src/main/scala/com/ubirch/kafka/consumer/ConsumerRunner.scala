@@ -5,15 +5,13 @@ import java.util.UUID
 import java.util.concurrent.atomic.{ AtomicBoolean, AtomicInteger, AtomicReference }
 
 import com.ubirch.kafka.util.Exceptions._
-import com.ubirch.kafka.util.{ Callback, Callback0, VersionedLazyLogging }
+import com.ubirch.kafka.util.{ Callback, Callback0, FutureHelper, VersionedLazyLogging }
 import com.ubirch.util.ShutdownableThread
-import com.ubirch.kafka.util.FutureHelper
 import monix.execution.Scheduler
 import org.apache.kafka.clients.consumer._
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.Deserializer
 
-import scala.beans.BeanProperty
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.{ FiniteDuration, _ }
 import scala.concurrent.{ ExecutionContext, Future }
@@ -40,16 +38,18 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
   implicit lazy val scheduler: Scheduler = monix.execution.Scheduler(ec)
 
   override val version: AtomicInteger = ConsumerRunner.version
+
   //This one is made public for testing purposes
-  @BeanProperty val isPaused: AtomicBoolean = new AtomicBoolean(false)
+  val isPaused: AtomicBoolean = new AtomicBoolean(false)
+
+  val pausedHistory = new AtomicReference[Int](0)
+
+  val unPausedHistory = new AtomicReference[Int](0)
 
   val partitionsRevoked = new AtomicReference[Set[TopicPartition]](Set.empty)
 
   val partitionsAssigned = new AtomicReference[Set[TopicPartition]](Set.empty)
 
-  @BeanProperty val pausedHistory = new AtomicReference[Int](0)
-
-  @BeanProperty val unPausedHistory = new AtomicReference[Int](0)
   ////Testing
 
   private val pauses = new AtomicInteger(0)
@@ -68,58 +68,129 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
 
   private val needForResumeCallback = new Callback0[Unit] {}
 
-  @BeanProperty var props: Map[String, AnyRef] = Map.empty
+  private[this] var _props: Map[String, AnyRef] = Map.empty
 
-  @BeanProperty var topics: Set[String] = Set.empty
+  def props: Map[String, AnyRef] = _props
 
-  @BeanProperty var pollTimeout: FiniteDuration = 1000 millis
+  def withProps(value: Map[String, AnyRef]): this.type = { _props = value; this }
 
-  @BeanProperty var pauseDuration: FiniteDuration = 1000 millis
+  private[this] var _topics: Set[String] = Set.empty
 
-  @BeanProperty var keyDeserializer: Option[Deserializer[K]] = None
+  def topics: Set[String] = _topics
 
-  @BeanProperty var valueDeserializer: Option[Deserializer[V]] = None
+  def withTopics(value: Set[String]): this.type = { _topics = value; this }
 
-  @BeanProperty var consumerRebalanceListenerBuilder: Option[Consumer[K, V] => ConsumerRebalanceListener] = None
+  private[this] var _pollTimeout: FiniteDuration = 1000 millis
 
-  @BeanProperty var useSelfAsRebalanceListener: Boolean = true
+  def pollTimeout: FiniteDuration = _pollTimeout
 
-  @BeanProperty var consumerRecordsController: Option[ConsumerRecordsController[K, V]] = None
+  def withPollTimeout(value: FiniteDuration): this.type = { _pollTimeout = value; this }
 
-  @BeanProperty var consumptionStrategy: ConsumptionStrategy = One
+  private[this] var _pauseDuration: FiniteDuration = 1000 millis
 
-  @BeanProperty var useAutoCommit: Boolean = false
+  def pauseDuration: FiniteDuration = _pauseDuration
 
-  @BeanProperty var maxCommitAttempts = 3
+  def withPauseDuration(value: FiniteDuration): this.type = { _pauseDuration = value; this }
 
-  @BeanProperty var maxCommitAttemptBackoff: FiniteDuration = 1000 millis
+  private[this] var _keyDeserializer: Option[Deserializer[K]] = None
 
-  @BeanProperty var delaySingleRecord: FiniteDuration = 0 millis
+  def keyDeserializer: Option[Deserializer[K]] = _keyDeserializer
 
-  @BeanProperty var delayRecords: FiniteDuration = 0 millis
+  def withKeyDeserializer(value: Option[Deserializer[K]]): this.type = { _keyDeserializer = value; this }
 
-  @BeanProperty var gracefulTimeout: FiniteDuration = 5000 millis
+  private[this] var _valueDeserializer: Option[Deserializer[V]] = None
 
-  @BeanProperty var forceExit: Boolean = true
+  def valueDeserializer: Option[Deserializer[V]] = _valueDeserializer
 
-  @BeanProperty var maxTimeAggregationSeconds: Long = 120
+  def withValueDeserializer(value: Option[Deserializer[V]]): this.type = { _valueDeserializer = value; this }
+
+  private[this] var _consumerRebalanceListenerBuilder: Option[Consumer[K, V] => ConsumerRebalanceListener] = None
+
+  def consumerRebalanceListenerBuilder: Option[Consumer[K, V] => ConsumerRebalanceListener] = _consumerRebalanceListenerBuilder
+
+  def withConsumerRebalanceListenerBuilder(value: Option[Consumer[K, V] => ConsumerRebalanceListener]): this.type = { _consumerRebalanceListenerBuilder = value; this }
+
+  private[this] var _useSelfAsRebalanceListener: Boolean = true
+
+  def useSelfAsRebalanceListener: Boolean = _useSelfAsRebalanceListener
+
+  def withUseSelfAsRebalanceListener(value: Boolean): this.type = { _useSelfAsRebalanceListener = value; this }
+
+  private[this] var _consumerRecordsController: Option[ConsumerRecordsController[K, V]] = None
+
+  def consumerRecordsController: Option[ConsumerRecordsController[K, V]] = _consumerRecordsController
+
+  def withConsumerRecordsController(value: Option[ConsumerRecordsController[K, V]]): this.type = { _consumerRecordsController = value; this }
+
+  private[this] var _consumptionStrategy: ConsumptionStrategy = One
+
+  def consumptionStrategy: ConsumptionStrategy = _consumptionStrategy
+
+  def withConsumptionStrategy(value: ConsumptionStrategy): this.type = { _consumptionStrategy = value; this }
+
+  private[this] var _useAutoCommit: Boolean = false
+
+  def useAutoCommit: Boolean = _useAutoCommit
+
+  def useAutoCommit(value: Boolean): this.type = { _useAutoCommit = value; this }
+
+  private[this] var _maxCommitAttempts: Int = 3
+
+  def maxCommitAttempts: Int = _maxCommitAttempts
+
+  def withMaxCommitAttempts(value: Int): this.type = { _maxCommitAttempts = value; this }
+
+  private[this] var _maxCommitAttemptBackoff: FiniteDuration = 1000 millis
+
+  def maxCommitAttemptBackoff: FiniteDuration = _maxCommitAttemptBackoff
+
+  def withMaxCommitAttemptBackoff(value: FiniteDuration): this.type = { _maxCommitAttemptBackoff = value; this }
+
+  private[this] var _delaySingleRecord: FiniteDuration = 0 millis
+
+  def delaySingleRecord: FiniteDuration = _delaySingleRecord
+
+  def withDelaySingleRecord(value: FiniteDuration): this.type = { _delaySingleRecord = value; this }
+
+  private[this] var _delayRecords: FiniteDuration = 0 millis
+
+  def delayRecords: FiniteDuration = _delayRecords
+
+  def withDelayRecords(value: FiniteDuration): this.type = { _delayRecords = value; this }
+
+  private[this] var _gracefulTimeout: FiniteDuration = 5000 millis
+
+  def gracefulTimeout: FiniteDuration = _gracefulTimeout
+
+  def withGracefulTimeout(value: FiniteDuration): this.type = { _gracefulTimeout = value; this }
+  private[this] var _forceExit: Boolean = true
+
+  def forceExit: Boolean = _forceExit
+
+  def forceExit(value: Boolean): this.type = { _forceExit = value; this }
+
+  private[this] var _maxTimeAggregationSeconds: Long = 120
+
+  def maxTimeAggregationSeconds: Long = _maxTimeAggregationSeconds
+
+  def withMaxTimeAggregationSeconds(value: Long): this.type = { _maxTimeAggregationSeconds = value; this }
 
   protected var consumer: Consumer[K, V] = _
 
-  def onPreConsume(f: () => Unit): Unit = preConsumeCallback.addCallback(f)
+  def onPreConsume(f: () => Unit): this.type = { preConsumeCallback.addCallback(f); this }
 
-  def onPostPoll(f: Int => Unit): Unit = postPollCallback.addCallback(f)
+  def onPostPoll(f: Int => Unit): this.type = { postPollCallback.addCallback(f); this }
 
-  def onPostConsume(f: Int => Unit): Unit = postConsumeCallback.addCallback(f)
+  def onPostConsume(f: Int => Unit): this.type = { postConsumeCallback.addCallback(f); this }
 
-  def onPostCommit(f: Int => Unit): Unit = postCommitCallback.addCallback(f)
+  def onPostCommit(f: Int => Unit): this.type = { postCommitCallback.addCallback(f); this }
 
-  def onNeedForPauseCallback(f: ((FiniteDuration, Int)) => Unit): Unit = needForPauseCallback.addCallback(f)
+  def onNeedForPauseCallback(f: ((FiniteDuration, Int)) => Unit): this.type = { needForPauseCallback.addCallback(f); this }
 
-  def onNeedForResumeCallback(f: () => Unit): Unit = needForResumeCallback.addCallback(f)
+  def onNeedForResumeCallback(f: () => Unit): this.type = { needForResumeCallback.addCallback(f); this }
 
   def process(consumerRecords: Vector[ConsumerRecord[K, V]]): Future[ProcessResult[K, V]] = {
-    getConsumerRecordsController
+    consumerRecordsController
       .map(_.process(consumerRecords))
       .getOrElse(Future.failed(ConsumerRecordsControllerException("No Records Controller Found")))
   }
@@ -127,11 +198,11 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
   //TODO: HANDLE AUTOCOMMIT
   override def execute(): Unit = {
     try {
-      createConsumer(getProps)
-      subscribe(getTopics.toList, getConsumerRebalanceListenerBuilder)
+      createConsumer(props)
+      subscribe(topics.toList, consumerRebalanceListenerBuilder)
 
       lazy val failed = new AtomicReference[Option[Throwable]](None)
-      lazy val commitAttempts = new AtomicInteger(getMaxCommitAttempts)
+      lazy val commitAttempts = new AtomicInteger(maxCommitAttempts)
 
       while (getRunning) {
 
@@ -139,7 +210,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
 
           preConsumeCallback.run()
 
-          val pollTimeDuration = java.time.Duration.ofMillis(getPollTimeout.toMillis)
+          val pollTimeDuration = java.time.Duration.ofMillis(pollTimeout.toMillis)
           val consumerRecords = consumer.poll(pollTimeDuration)
           val totalPolledCount = consumerRecords.count()
 
@@ -147,7 +218,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
 
             postPollCallback.run(totalPolledCount)
 
-            getConsumptionStrategy match {
+            consumptionStrategy match {
               case All =>
                 if (totalPolledCount > 0) {
                   allFactory(consumerRecords).run()
@@ -170,8 +241,8 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
           case e: NeedForPauseException =>
             val partitions = consumer.assignment()
             consumer.pause(partitions)
-            getIsPaused.set(true)
-            getPausedHistory.set(getPausedHistory.get() + 1)
+            isPaused.set(true)
+            pausedHistory.set(pausedHistory.get() + 1)
             val currentPauses = pauses.get()
             val pause: FiniteDuration = e.maybeDuration.getOrElse(amortizePauseDuration())
             scheduler.scheduleOnce(pause) {
@@ -182,8 +253,8 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
           case e: NeedForResumeException =>
             val partitions = consumer.assignment()
             consumer.resume(partitions)
-            getIsPaused.set(false)
-            getUnPausedHistory.set(getUnPausedHistory.get() + 1)
+            isPaused.set(false)
+            unPausedHistory.set(unPausedHistory.get() + 1)
             needForResumeCallback.run()
             logger.debug("NeedForResumeException: [{}], partitions[{}]", e.getMessage, partitions.size())
           case e: CommitTimeoutException =>
@@ -197,7 +268,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
                   throw MaxNumberOfCommitAttemptsException("Error Committing", s"$commitAttempts attempts were performed. But none worked. Escalating ...", Left(e))
                 } else {
                   try {
-                    FutureHelper.delay(getMaxCommitAttemptBackoff)(e.commitFunc())
+                    FutureHelper.delay(maxCommitAttemptBackoff)(e.commitFunc())
                     break()
                   } catch {
                     case _: CommitTimeoutException =>
@@ -225,7 +296,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
         logger.error("MaxNumberOfCommitAttemptsException: {}", e.getMessage)
       case e: ConsumerCreationException =>
         logger.error("ConsumerCreationException: {}", e.getMessage)
-        shutdown(getGracefulTimeout.length, getGracefulTimeout.unit)
+        shutdown(gracefulTimeout.length, gracefulTimeout.unit)
       case e: EmptyTopicException =>
         logger.error("EmptyTopicException: {}", e.getMessage)
       case e: NeedForShutDownException =>
@@ -238,8 +309,8 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
     } finally {
       logger.info("Running -finally-")
       if (consumer != null) {
-        consumer.close(java.time.Duration.of(getGracefulTimeout.length, java.time.temporal.ChronoUnit.MILLIS))
-        shutdown(getGracefulTimeout.length, getGracefulTimeout.unit)
+        consumer.close(java.time.Duration.of(gracefulTimeout.length, java.time.temporal.ChronoUnit.MILLIS))
+        shutdown(gracefulTimeout.length, gracefulTimeout.unit)
       }
     }
   }
@@ -257,9 +328,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
       pauses.getAndDecrement()
     }
 
-    val pauseDuration = getPauseDuration.toMillis
-
-    val amortized = scala.math.pow(2, ps).toInt * pauseDuration
+    val amortized = scala.math.pow(2, ps).toInt * pauseDuration.toMillis
 
     FiniteDuration(amortized, MILLISECONDS)
 
@@ -268,9 +337,9 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
   @throws(classOf[ConsumerCreationException])
   def createConsumer(props: Map[String, AnyRef]): Unit = {
 
-    logger.debug(s"Starting Processing in mode '${getConsumptionStrategy.toString}'")
+    logger.debug(s"Starting Processing in mode '${consumptionStrategy.toString}'")
 
-    if (getKeyDeserializer.isEmpty && getValueDeserializer.isEmpty) {
+    if (keyDeserializer.isEmpty && valueDeserializer.isEmpty) {
       throw ConsumerCreationException("No Serializers Found", "Please set the serializers for the key and value.")
     }
 
@@ -279,8 +348,8 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
     }
 
     try {
-      val kd = getKeyDeserializer.get
-      val vd = getValueDeserializer.get
+      val kd = keyDeserializer.get
+      val vd = valueDeserializer.get
       val propsAsJava = props.asJava
 
       kd.configure(propsAsJava, true)
@@ -294,9 +363,9 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
         }
 
       if (isAutoCommit) {
-        setUseAutoCommit(true)
+        useAutoCommit(true)
       } else {
-        setUseAutoCommit(false)
+        useAutoCommit(false)
       }
 
       consumer = new KafkaConsumer[K, V](propsAsJava, kd, vd)
@@ -313,11 +382,11 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
     if (topics.nonEmpty) {
       val topicsAsJava = topics.asJavaCollection
       consumerRebalanceListenerBuilder match {
-        case Some(crl) if !getUseSelfAsRebalanceListener =>
+        case Some(crl) if !useSelfAsRebalanceListener =>
           val rebalancer = crl(consumer)
           logger.debug("Subscribing to [{}] with external rebalance listener [{}]", topics.mkString(" "), rebalancer.getClass.getCanonicalName)
           consumer.subscribe(topicsAsJava, rebalancer)
-        case _ if getUseSelfAsRebalanceListener =>
+        case _ if useSelfAsRebalanceListener =>
           logger.debug("Subscribing to [{}] with self rebalance listener", topics.mkString(" "))
           consumer.subscribe(topicsAsJava, this)
         case _ =>
@@ -350,10 +419,10 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
   }
 
   def startPolling(): Unit = {
-    if (getForceExit) {
+    if (forceExit) {
       scheduler.scheduleWithFixedDelay(1 second, 2 seconds) {
         if (!getRunning) {
-          logger.info("The thread of [{}] is not running and forced exit is [{}]", name, getForceExit)
+          logger.info("The thread of [{}] is not running and forced exit is [{}]", name, forceExit)
           sys.exit(1)
         }
       }
@@ -379,7 +448,7 @@ object ConsumerRunner {
 
   def controllerBased[K, V](controller: ConsumerRecordsController[K, V])(implicit ec: ExecutionContext): ConsumerRunner[K, V] = {
     val consumer = empty[K, V]
-    consumer.setConsumerRecordsController(Some(controller))
+    consumer.withConsumerRecordsController(Some(controller))
     consumer
   }
 

@@ -76,12 +76,12 @@ trait WithProcessRecords[K, V] {
     override protected val batchCountDownSize: Int = partitionRecordsSize
 
     def start() {
-      if (getDelaySingleRecord == 0.millis && getDelayRecords == 0.millis) {
+      if (delaySingleRecord == 0.millis && delayRecords == 0.millis) {
         partitionRecords.foreach(x => processRecords(Vector(x)))
       } else {
         partitionRecords.toIterator
-          .delayOnNext(getDelaySingleRecord)
-          .consumeWithFinalDelay(x => processRecords(Vector(x)))(getDelayRecords)
+          .delayOnNext(delaySingleRecord)
+          .consumeWithFinalDelay(x => processRecords(Vector(x)))(delayRecords)
       }
     }
 
@@ -126,8 +126,8 @@ trait WithProcessRecords[K, V] {
 
     def start() {
       processRecords(consumerRecords.iterator().asScala.toVector)
-      if (getDelayRecords > 0.millis) {
-        FutureHelper.delay(getDelayRecords)(())
+      if (delayRecords > 0.millis) {
+        FutureHelper.delay(delayRecords)(())
       }
     }
 

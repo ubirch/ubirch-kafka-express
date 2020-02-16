@@ -99,16 +99,16 @@ trait ExpressKafka[K, V, R] extends ExpressConsumer[K, V] with ExpressProducer[K
   lazy val production: ProducerRunner[K, V] = ProducerRunner(producerConfigs, Some(keySerializer), Some(valueSerializer))
 
   lazy val consumption: ConsumerRunner[K, V] = {
-    val impl = ConsumerRunner.emptyWithMetrics[K, V](prefix, metricsSubNamespace)
-    impl.setUseAutoCommit(false)
-    impl.setTopics(consumerTopics)
-    impl.setProps(consumerConfigs)
-    impl.setKeyDeserializer(Some(keyDeserializer))
-    impl.setValueDeserializer(Some(valueDeserializer))
-    impl.setConsumerRecordsController(Some(controller))
-    impl.setConsumptionStrategy(All)
-    impl.setMaxTimeAggregationSeconds(maxTimeAggregationSeconds)
-    impl
+    ConsumerRunner.emptyWithMetrics[K, V](prefix, metricsSubNamespace)
+      .useAutoCommit(false)
+      .withTopics(consumerTopics)
+      .withProps(consumerConfigs)
+      .withKeyDeserializer(Some(keyDeserializer))
+      .withValueDeserializer(Some(valueDeserializer))
+      .withConsumerRecordsController(Some(controller))
+      .withConsumptionStrategy(All)
+      .withMaxTimeAggregationSeconds(maxTimeAggregationSeconds)
+
   }
 
   trait Process {
