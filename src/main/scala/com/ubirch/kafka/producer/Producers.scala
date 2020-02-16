@@ -16,11 +16,11 @@ object StringProducer {
 
   def apply(props: Map[String, AnyRef]): StringProducer = {
     require(props.nonEmpty, "Can't be empty")
-    val pd = new StringProducer {}
-    pd.setProps(props)
-    pd.setKeySerializer(Some(new StringSerializer()))
-    pd.setValueSerializer(Some(new StringSerializer()))
-    pd
+    new StringProducer {}
+      .withProps(props)
+      .withKeySerializer(Some(new StringSerializer()))
+      .withValueSerializer(Some(new StringSerializer()))
+
   }
 }
 
@@ -35,10 +35,10 @@ object BytesProducer {
 
   def apply(props: Map[String, AnyRef]): BytesProducer = {
     require(props.nonEmpty, "Can't be empty")
-    val pd = new BytesProducer {}
-    pd.setProps(props)
-    pd.setKeySerializer(Some(new StringSerializer()))
-    pd.setValueSerializer(Some(new ByteArraySerializer()))
-    pd
+    new BytesProducer {}
+      .withProps(props)
+      .withKeySerializer(Some(new StringSerializer()))
+      .withValueSerializer(Some(new ByteArraySerializer()))
+
   }
 }

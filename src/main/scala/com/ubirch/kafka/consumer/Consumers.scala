@@ -31,9 +31,7 @@ object StringConsumer {
   }
 
   def controllerBased(controller: ConsumerRecordsController[String, String])(implicit ec: ExecutionContext): StringConsumer = {
-    val consumer = empty
-    consumer.withConsumerRecordsController(Some(controller))
-    consumer
+    empty.withConsumerRecordsController(Some(controller))
   }
 
 }
@@ -65,9 +63,7 @@ object BytesConsumer {
   }
 
   def controllerBased(controller: ConsumerRecordsController[String, Array[Byte]])(implicit ec: ExecutionContext): BytesConsumer = {
-    val consumer = empty
-    consumer.withConsumerRecordsController(Some(controller))
-    consumer
+    empty.withConsumerRecordsController(Some(controller))
   }
 
 }

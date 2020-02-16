@@ -28,11 +28,23 @@ abstract class ProducerRunner[K, V] extends VersionedLazyLogging {
 
   private val onPostProducerCreation = new Callback[Option[Producer[K, V]], Unit] {}
 
-  @BeanProperty var props: Map[String, AnyRef] = Map.empty
+  private[this] var _props: Map[String, AnyRef] = Map.empty
 
-  @BeanProperty var keySerializer: Option[Serializer[K]] = None
+  def props: Map[String, AnyRef] = _props
 
-  @BeanProperty var valueSerializer: Option[Serializer[V]] = None
+  def withProps(value: Map[String, AnyRef]): this.type = { _props = value; this }
+
+  private[this] var _keySerializer: Option[Serializer[K]] = None
+
+  def keySerializer: Option[Serializer[K]] = _keySerializer
+
+  def withKeySerializer(value: Option[Serializer[K]]): this.type = { _keySerializer = value; this }
+
+  private[this] var _valueSerializer: Option[Serializer[V]] = None
+
+  def valueSerializer: Option[Serializer[V]] = _valueSerializer
+
+  def withValueSerializer(value: Option[Serializer[V]]): this.type = { _valueSerializer = value; this }
 
   private var producer: Option[Producer[K, V]] = None
 
@@ -54,19 +66,19 @@ abstract class ProducerRunner[K, V] extends VersionedLazyLogging {
 
     onPreProducerCreation.run()
 
-    if (getKeySerializer.isEmpty && getValueSerializer.isEmpty) {
+    if (keySerializer.isEmpty && valueSerializer.isEmpty) {
       throw ProducerCreationException("No Serializers Found", "Please set the serializers for the key and value.")
     }
 
-    if (getProps.isEmpty) {
-      throw ProducerCreationException("No Properties Found", "Please, set the properties for the consumer creation.")
+    if (props.isEmpty) {
+      throw ProducerCreationException("No Properties Found", "Please, set the properties for the producer creation.")
     }
 
     try {
 
-      val ks = getKeySerializer.get
-      val vs = getValueSerializer.get
-      val propsAsJava = getProps.asJava
+      val ks = keySerializer.get
+      val vs = valueSerializer.get
+      val propsAsJava = props.asJava
 
       ks.configure(propsAsJava, true)
       vs.configure(propsAsJava, false)
@@ -130,11 +142,11 @@ object ProducerRunner {
   val version: AtomicInteger = new AtomicInteger(0)
 
   def apply[K, V](props: Map[String, AnyRef], keySerializer: Option[Serializer[K]], valueSerializer: Option[Serializer[V]]): ProducerRunner[K, V] = {
-    val pr = new ProducerRunner[K, V] {}
-    pr.setProps(props)
-    pr.setKeySerializer(keySerializer)
-    pr.setValueSerializer(valueSerializer)
-    pr
+    new ProducerRunner[K, V] {}
+      .withProps(props)
+      .withKeySerializer(keySerializer)
+      .withValueSerializer(valueSerializer)
+
   }
 
 }
