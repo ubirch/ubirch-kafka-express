@@ -7,12 +7,13 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 trait WithProducerShutdownHook extends LazyLogging {
-  def hookFunc(producerRunner: => ProducerRunner[_, _]): () => Future[Unit] = {
+  def hookFunc(producerRunner: => ProducerRunner[_, _], timeout: FiniteDuration = 5 seconds): () => Future[Unit] = {
     () =>
-      val timeout = 5 seconds
-
       logger.info(s"Shutting down Producer[timeout=$timeout]...")
-      Future.successful(producerRunner.close(timeout))
+      if (Option(producerRunner).isDefined)
+        Future.successful(producerRunner.close(timeout))
+      else Future.unit
+
   }
 }
 

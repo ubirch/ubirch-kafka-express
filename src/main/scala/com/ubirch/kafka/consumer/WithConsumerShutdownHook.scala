@@ -8,7 +8,9 @@ trait WithConsumerShutdownHook extends LazyLogging {
   def hookFunc(gracefulTimeout: => Int, consumerRunner: => ConsumerRunner[_, _]): () => Future[Unit] = {
     () =>
       logger.info(s"Shutting down Consumer[timeout=$gracefulTimeout secs name=${consumerRunner.getName}] ...")
-      Future.successful(consumerRunner.shutdown(gracefulTimeout, java.util.concurrent.TimeUnit.SECONDS))
+      if (Option(consumerRunner).isDefined)
+        Future.successful(consumerRunner.shutdown(gracefulTimeout, java.util.concurrent.TimeUnit.SECONDS))
+      else Future.unit
   }
 }
 
