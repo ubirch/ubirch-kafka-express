@@ -5,7 +5,7 @@ Abstractions for creating consumers and producers.
 ## Consumer Runner
 
 The purpose of the consumer runner is to provide a simple an straightforward abstraction
-for creating and managing a kakfa consumer.
+for creating and managing a kafka consumer.
 
 The principal elements of the consumer runner environment are:
 
