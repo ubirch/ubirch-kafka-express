@@ -239,7 +239,9 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
       logger.info("Running -finally-")
       if (consumer != null) {
         consumer.close(java.time.Duration.of(getGracefulTimeout.length, java.time.temporal.ChronoUnit.MILLIS))
-        shutdown(getGracefulTimeout.length, getGracefulTimeout.unit)
+        if (getRunning) {
+          shutdown(getGracefulTimeout.length, getGracefulTimeout.unit)
+        }
       }
     }
   }
