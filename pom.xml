@@ -57,6 +57,7 @@
     </licenses>
 
     <properties>
+        <!-- ensure compiler version -->
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <scala.version>2.12.6</scala.version>
@@ -90,6 +91,7 @@
         <!-- plugins -->
         <scalariform.version>0.2.2</scalariform.version>
         <scala-maven-plugin.version>3.3.2</scala-maven-plugin.version>
+        <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
         <maven-surefire-plugin.version>2.7</maven-surefire-plugin.version>
         <scalatest-maven-plugin.version>1.0</scalatest-maven-plugin.version>
         <!-- plugins -->
@@ -252,6 +254,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
+                <version>${maven-source-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
