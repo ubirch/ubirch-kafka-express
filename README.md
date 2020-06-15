@@ -79,9 +79,9 @@ with the method *send*.
 ## Import into project
 
 ```xml
-      <dependency>
+        <dependency>
             <groupId>com.ubirch</groupId>
-            <artifactId>event-log-kafka</artifactId>
-            <version>1.3.0-SNAPSHOT</version>
-       </dependency>
+            <artifactId>ubirch-kafka-express</artifactId>
+            <version>${event-log-kafka.version}</version>
+        </dependency>
 ```
