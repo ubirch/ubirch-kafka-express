@@ -82,6 +82,6 @@ with the method *send*.
         <dependency>
             <groupId>com.ubirch</groupId>
             <artifactId>ubirch-kafka-express</artifactId>
-            <version>${event-log-kafka.version}</version>
+            <version>1.2.11-SNAPSHOT</version>
         </dependency>
 ```
