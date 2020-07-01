@@ -6,7 +6,7 @@
     <!-- basic info -->
     <groupId>com.ubirch</groupId>
     <artifactId>ubirch-kafka-express</artifactId>
-    <version>1.2.11-SNAPSHOT</version>
+    <version>1.2.12-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <description>Simple wrapper for starting a kafka consumer or producer very quickly</description>
     <url>https://ubirch.com</url>

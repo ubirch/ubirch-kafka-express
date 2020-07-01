@@ -225,7 +225,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
         logger.error("MaxNumberOfCommitAttemptsException: {}", e.getMessage)
       case e: ConsumerCreationException =>
         logger.error("ConsumerCreationException: {}", e.getMessage)
-        shutdown(getGracefulTimeout.length, getGracefulTimeout.unit)
+        disconnect()
       case e: EmptyTopicException =>
         logger.error("EmptyTopicException: {}", e.getMessage)
       case e: NeedForShutDownException =>
@@ -240,7 +240,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
       if (consumer != null) {
         consumer.close(java.time.Duration.of(getGracefulTimeout.length, java.time.temporal.ChronoUnit.MILLIS))
         if (getRunning) {
-          shutdown(getGracefulTimeout.length, getGracefulTimeout.unit)
+          disconnect()
         }
       }
     }
@@ -353,6 +353,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
 
   def startPolling(): Unit = {
     if (getForceExit) {
+      logger.info("Starting Force Exit Control")
       scheduler.scheduleWithFixedDelay(1 second, 2 seconds) {
         if (!getRunning) {
           logger.info("The thread of [{}] is not running and forced exit is [{}]", name, getForceExit)
@@ -361,6 +362,18 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
       }
     }
     start()
+  }
+
+  def startWithExitControl(): Unit = startPolling()
+
+  def disconnect(): Unit = {
+    try {
+      shutdown(getGracefulTimeout.length, getGracefulTimeout.unit)
+    } catch {
+      case e: InterruptedException =>
+        logger.warn("Encounter exception=[{}] with message=[{}] when disconnecting. Nothing serious.", e.getClass.getCanonicalName, e.getMessage)
+    }
+
   }
 
 }
