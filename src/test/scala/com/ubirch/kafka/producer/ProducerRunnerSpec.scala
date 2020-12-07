@@ -44,7 +44,7 @@ class ProducerRunnerSpec extends TestBase {
 
         val producer = StringProducer(config)
         val record = new ProducerRecord[String, String]("test.works", "hola")
-        val sent = producer.getProducerOrCreate.send(record).get()
+        val _ = producer.getProducerOrCreate.send(record).get()
 
         val record1 = new ProducerRecord[String, String]("test_works", "hola")
 

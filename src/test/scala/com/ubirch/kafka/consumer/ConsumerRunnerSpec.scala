@@ -15,7 +15,7 @@ import org.apache.kafka.common.serialization.StringDeserializer
 
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
-import scala.language.{ implicitConversions, postfixOps }
+import scala.language.postfixOps
 
 class ConsumerRunnerSpec extends TestBase {
 
@@ -543,7 +543,7 @@ class ConsumerRunnerSpec extends TestBase {
             new ProcessRecordsOne(currentPartitionIndex, currentPartition, allPartitions, consumerRecords) {
               override def commitFunc(): Vector[Unit] = {
                 attempts.countDown()
-                throw CommitTimeoutException("Commit timed out", () => commitFunc(), new TimeoutException("Timed out"))
+                throw CommitTimeoutException("Commit timed out", () => { val _ = commitFunc() }, new TimeoutException("Timed out"))
               }
             }
           }
@@ -599,7 +599,7 @@ class ConsumerRunnerSpec extends TestBase {
                   attempts.countDown()
                   throw new Exception("Another exception")
                 } else {
-                  throw CommitTimeoutException("Commit timed out", () => commitFunc(), new TimeoutException("Timed out"))
+                  throw CommitTimeoutException("Commit timed out", () => { val _ = commitFunc() }, new TimeoutException("Timed out"))
                 }
               }
             }
@@ -659,7 +659,7 @@ class ConsumerRunnerSpec extends TestBase {
                   committed.countDown()
                   f
                 } else {
-                  throw CommitTimeoutException("Commit timed out", () => commitFunc(), new TimeoutException("Timed out"))
+                  throw CommitTimeoutException("Commit timed out", () => { val _ = commitFunc() }, new TimeoutException("Timed out"))
                 }
               }
             }

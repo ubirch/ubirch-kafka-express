@@ -3,7 +3,6 @@ package com.ubirch.kafka.util
 import monix.execution.Scheduler
 import org.joda.time.{ Duration, Instant }
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import scala.language.implicitConversions
 
@@ -46,6 +45,6 @@ object Implicits {
 
   implicit def enrichedInstant(instant: Instant): EnrichedInstant = EnrichedInstant(instant)
 
-  implicit def enrichedIterator[T](iterator: Iterator[T])(implicit ec: ExecutionContext): EnrichedIterator[T] = EnrichedIterator[T](iterator)
+  implicit def enrichedIterator[T](iterator: Iterator[T]): EnrichedIterator[T] = EnrichedIterator[T](iterator)
 
 }

@@ -5,9 +5,8 @@ import java.util.UUID
 import java.util.concurrent.atomic.{ AtomicBoolean, AtomicInteger, AtomicReference }
 
 import com.ubirch.kafka.util.Exceptions._
-import com.ubirch.kafka.util.{ Callback, Callback0, VersionedLazyLogging }
+import com.ubirch.kafka.util.{ Callback, Callback0, FutureHelper, VersionedLazyLogging }
 import com.ubirch.util.ShutdownableThread
-import com.ubirch.kafka.util.FutureHelper
 import monix.execution.Scheduler
 import org.apache.kafka.clients.consumer._
 import org.apache.kafka.common.TopicPartition
@@ -160,7 +159,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
             }
           } finally {
             //this is in a try to guaranty its execution.
-            postConsumeCallback.run(totalPolledCount)
+            val _ = postConsumeCallback.run(totalPolledCount)
           }
 
           //This is a listener on other exception for when the consumer is not paused.
@@ -261,7 +260,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
 
     val pauseDuration = getPauseDuration.toMillis
 
-    val amortized = scala.math.pow(2, ps).toInt * pauseDuration
+    val amortized = scala.math.pow(2, ps.toDouble).toInt * pauseDuration
 
     FiniteDuration(amortized, MILLISECONDS)
 
