@@ -1,8 +1,13 @@
 package com.ubirch.kafka.util
 
+import java.nio.charset.StandardCharsets.UTF_8
+
 import monix.execution.Scheduler
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.joda.time.{ Duration, Instant }
 
+import scala.collection.JavaConverters._
+import scala.collection.breakOut
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import scala.language.implicitConversions
@@ -39,6 +44,23 @@ case class EnrichedInstant(instant: Instant) {
 
 }
 
+case class EnrichedConsumerRecord[K, V](cr: ConsumerRecord[K, V]) extends AnyVal {
+
+  def findHeader(key: String): Option[String] = {
+    cr.headers()
+      .asScala
+      .find(h => h.key().toLowerCase == key.toLowerCase)
+      .map(h => new String(h.value(), UTF_8))
+  }
+
+  def existsHeader(key: String): Boolean = findHeader(key).isDefined
+
+  def headersScala: Map[String, String] = cr.headers()
+    .asScala
+    .map(h => h.key() -> new String(h.value(), UTF_8))(breakOut)
+
+}
+
 /**
   * Util that contains the implicits to create enriched values.
   */
@@ -47,5 +69,7 @@ object Implicits {
   implicit def enrichedInstant(instant: Instant): EnrichedInstant = EnrichedInstant(instant)
 
   implicit def enrichedIterator[T](iterator: Iterator[T])(implicit ec: ExecutionContext): EnrichedIterator[T] = EnrichedIterator[T](iterator)
+
+  implicit def enrichedConsumerRecord[K, V](cr: ConsumerRecord[K, V]): EnrichedConsumerRecord[K, V] = EnrichedConsumerRecord[K, V](cr)
 
 }

@@ -6,7 +6,7 @@
     <!-- basic info -->
     <groupId>com.ubirch</groupId>
     <artifactId>ubirch-kafka-express</artifactId>
-    <version>1.2.12-SNAPSHOT</version>
+    <version>1.2.13-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <description>Simple wrapper for starting a kafka consumer or producer very quickly</description>
     <url>https://ubirch.com</url>
@@ -31,10 +31,10 @@
         </developer>
     </developers>
     <scm>
-        <connection>scm:git:git://github.com/ubirch/ubirch-event-log.git</connection>
-        <developerConnection>scm:git:git@github.com:ubirch/ubirch-event-log.git</developerConnection>
-        <url>https://github.com/ubirch/ubirch-event-log</url>
-        <tag>event-log-kafka-1.2.8-SNAPSHOT</tag>
+        <connection>scm:git:git@github.com:ubirch/ubirch-kafka-express.git</connection>
+        <developerConnection>scm:git:git@github.com:ubirch/ubirch-kafka-express.git</developerConnection>
+        <url>https://github.com/ubirch/ubirch-kafka-express</url>
+        <tag>1.2.13-SNAPSHOT</tag>
     </scm>
 
     <distributionManagement>
