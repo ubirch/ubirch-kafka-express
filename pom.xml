@@ -198,6 +198,13 @@
             <version>${io.prometheus.simpleclient_graphite_bridge.version}</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/io.prometheus.jmx/collector -->
+        <dependency>
+            <groupId>io.prometheus.jmx</groupId>
+            <artifactId>collector</artifactId>
+            <version>0.13.0</version>
+        </dependency>
+
         <!-- Prometheus -->
 
         <!-- Test -->
