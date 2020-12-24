@@ -9,13 +9,14 @@ import com.typesafe.config.{ Config, ConfigFactory }
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.kafka.consumer._
 import com.ubirch.kafka.producer.{ ProducerBasicConfigs, ProducerRunner, WithProducerShutdownHook, WithSerializer }
+import monix.execution.Scheduler
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.{ ProducerRecord, RecordMetadata }
 import org.apache.kafka.common.header.Header
 import org.apache.kafka.common.header.internals.{ RecordHeader, RecordHeaders }
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.Future
 import scala.util.{ Failure, Success }
 
 trait ExpressConsumer[K, V] extends ConsumerBasicConfigs with WithDeserializers[K, V] {
@@ -95,18 +96,18 @@ trait ConfigBase {
 trait ExpressKafka[K, V, R] extends ExpressConsumer[K, V] with ExpressProducer[K, V] {
   thiz =>
 
-  implicit def ec: ExecutionContext
+  implicit def scheduler: Scheduler
 
   lazy val controller: ConsumerRecordsController[K, V] = new ConsumerRecordsController[K, V] {
 
-    def simpleProcessResult(result: R, consumerRecord: Vector[ConsumerRecord[K, V]]): ProcessResult[K, V] = new ProcessResult[K, V] {
+    def simpleProcessResult(consumerRecord: Vector[ConsumerRecord[K, V]]): ProcessResult[K, V] = new ProcessResult[K, V] {
       override val id: UUID = UUID.randomUUID()
       override val consumerRecords: Vector[ConsumerRecord[K, V]] = consumerRecord
     }
 
     override type A = ProcessResult[K, V]
     override def process(consumerRecords: Vector[ConsumerRecord[K, V]]): Future[ProcessResult[K, V]] = {
-      thiz.process.invoke(consumerRecords).map(x => simpleProcessResult(x, consumerRecords))
+      thiz.process.invoke(consumerRecords).map(_ => simpleProcessResult(consumerRecords))
     }
   }
 
