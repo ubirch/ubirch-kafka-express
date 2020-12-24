@@ -130,34 +130,14 @@ trait WithProcessRecords[K, V] {
       }
     }
 
-    def commitFuncUpgraded(): Vector[Unit] = {
+    def commitFunc(): Vector[Unit] = {
 
       try {
         consumer.commitSync()
         postCommitCallback.run(consumerRecords.count())
       } catch {
         case e: TimeoutException =>
-          throw CommitTimeoutException("Commit timed out", () => { val _ = this.commitFuncUpgraded() }, e)
-        case e: Throwable =>
-          throw e
-      }
-
-    }
-
-    @deprecated("It makes commits slower. Do not use. Use commitFuncUpgraded. It will be removed soon.", "1.2.6")
-    def commitFunc(): Vector[Unit] = {
-
-      try {
-        consumerRecords.partitions().asScala.foreach { p =>
-          val partitionRecords = consumerRecords.records(p).asScala.toVector
-          val partitionRecordsSize = partitionRecords.size
-          val lastOffset = partitionRecords(partitionRecordsSize - 1).offset()
-          consumer.commitSync(Collections.singletonMap(p, new OffsetAndMetadata(lastOffset + 1)))
-        }
-        postCommitCallback.run(consumerRecords.count())
-      } catch {
-        case e: TimeoutException =>
-          throw CommitTimeoutException("Commit timed out", () => this.commitFunc(), e)
+          throw CommitTimeoutException("Commit timed out", () => { val _ = this.commitFunc() }, e)
         case e: Throwable =>
           throw e
       }
@@ -174,7 +154,7 @@ trait WithProcessRecords[K, V] {
         failed.set(None)
         throw error.get
       } else {
-        commitFuncUpgraded()
+        commitFunc()
       }
 
     }
