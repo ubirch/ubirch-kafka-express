@@ -102,8 +102,8 @@ trait ExpressKafka[K, V, R] extends ExpressConsumer[K, V] with ExpressProducer[K
   lazy val controller: ConsumerRecordsController[K, V] = new ConsumerRecordsController[K, V] {
 
     def simpleProcessResult(consumerRecord: Vector[ConsumerRecord[K, V]]): ProcessResult[K, V] = new ProcessResult[K, V] {
-      override val id: UUID = UUID.randomUUID()
-      override val consumerRecords: Vector[ConsumerRecord[K, V]] = consumerRecord
+      override lazy val id: UUID = UUID.randomUUID()
+      override lazy val consumerRecords: Vector[ConsumerRecord[K, V]] = consumerRecord
     }
 
     override type A = ProcessResult[K, V]
