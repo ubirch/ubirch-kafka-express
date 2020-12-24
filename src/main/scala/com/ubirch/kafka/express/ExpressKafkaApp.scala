@@ -4,12 +4,13 @@ import java.lang.{ Iterable => JIterable }
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import java.util.concurrent.{ CountDownLatch, TimeUnit }
-
 import com.typesafe.config.{ Config, ConfigFactory }
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.kafka.consumer._
 import com.ubirch.kafka.producer.{ ProducerBasicConfigs, ProducerRunner, WithProducerShutdownHook, WithSerializer }
+import monix.eval.Task
 import monix.execution.Scheduler
+import monix.reactive.Observable
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.{ ProducerRecord, RecordMetadata }
 import org.apache.kafka.common.header.Header
@@ -132,7 +133,10 @@ trait ExpressKafka[K, V, R] extends ExpressConsumer[K, V] with ExpressProducer[K
 
   object Process {
     def apply(p: Vector[ConsumerRecord[K, V]] => R): Process = (consumerRecords: Vector[ConsumerRecord[K, V]]) => Future(p(consumerRecords))
+    def sync(p: Vector[ConsumerRecord[K, V]] => R): Process = apply(p)
     def async(p: Vector[ConsumerRecord[K, V]] => Future[R]): Process = (consumerRecords: Vector[ConsumerRecord[K, V]]) => p(consumerRecords)
+    def task(p: Vector[ConsumerRecord[K, V]] => Task[R]): Process = (consumerRecords: Vector[ConsumerRecord[K, V]]) => p(consumerRecords).runToFuture
+    def obs(p: Observable[ConsumerRecord[K, V]] => Task[R]): Process = (consumerRecords: Vector[ConsumerRecord[K, V]]) => p(Observable.fromIterable(consumerRecords)).runToFuture
   }
 
   def process: Process
