@@ -157,7 +157,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val scheduler: Schedu
             }
           } finally {
             //this is in a try to guaranty its execution.
-            postConsumeCallback.run(totalPolledCount)
+            val _ = postConsumeCallback.run(totalPolledCount)
           }
 
           //This is a listener on other exception for when the consumer is not paused.
@@ -258,7 +258,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val scheduler: Schedu
 
     val pauseDuration = getPauseDuration.toMillis
 
-    val amortized = scala.math.pow(2, ps).toInt * pauseDuration
+    val amortized = scala.math.pow(2, ps.toDouble).toInt * pauseDuration
 
     FiniteDuration(amortized, MILLISECONDS)
 

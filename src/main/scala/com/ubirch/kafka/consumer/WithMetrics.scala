@@ -70,8 +70,8 @@ trait WithMetrics extends WithNamespace {
 
   onPostConsume { count =>
     if (count > 0) {
-      pollSizeSummary.labels(metricsSubNamespaceLabel).observe(count)
-      pollConsumeTimer.observeDuration()
+      pollSizeSummary.labels(metricsSubNamespaceLabel).observe(count.toDouble)
+      val _ = pollConsumeTimer.observeDuration()
     }
   }
   //Metrics Def End
