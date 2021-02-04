@@ -1,16 +1,23 @@
 package com.ubirch.kafka.express
 
+import java.lang.{ Iterable => JIterable }
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import java.util.concurrent.{ CountDownLatch, TimeUnit }
-
 import com.typesafe.config.{ Config, ConfigFactory }
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.kafka.consumer._
 import com.ubirch.kafka.producer.{ ProducerBasicConfigs, ProducerRunner, WithProducerShutdownHook, WithSerializer }
+import monix.eval.Task
+import monix.execution.Scheduler
+import monix.reactive.Observable
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.{ ProducerRecord, RecordMetadata }
+import org.apache.kafka.common.header.Header
+import org.apache.kafka.common.header.internals.{ RecordHeader, RecordHeaders }
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.collection.JavaConverters._
+import scala.concurrent.Future
 import scala.util.{ Failure, Success }
 
 trait ExpressConsumer[K, V] extends ConsumerBasicConfigs with WithDeserializers[K, V] {
@@ -31,7 +38,16 @@ trait ExpressProducer[K, V] extends ProducerBasicConfigs with WithSerializer[K, 
 
   def production: ProducerRunner[K, V]
 
-  def send(topic: String, value: V): Future[RecordMetadata] = production.send(new ProducerRecord[K, V](topic, value))
+  def send(pr: ProducerRecord[K, V]): Future[RecordMetadata] = production.send(pr)
+
+  def send(topic: String, value: V): Future[RecordMetadata] = send(new ProducerRecord[K, V](topic, value))
+
+  def send(topic: String, value: V, headers: (String, String)*): Future[RecordMetadata] = {
+    val headersIterable: JIterable[Header] = headers
+      .map(p => new RecordHeader(p._1, p._2.getBytes(UTF_8)): Header).asJava
+    val pm: ProducerRecord[K, V] = new ProducerRecord(topic, null, null, null.asInstanceOf[K], value, new RecordHeaders(headersIterable))
+    send(pm)
+  }
 
 }
 
@@ -81,18 +97,18 @@ trait ConfigBase {
 trait ExpressKafka[K, V, R] extends ExpressConsumer[K, V] with ExpressProducer[K, V] {
   thiz =>
 
-  implicit def ec: ExecutionContext
+  implicit def scheduler: Scheduler
 
   lazy val controller: ConsumerRecordsController[K, V] = new ConsumerRecordsController[K, V] {
 
-    def simpleProcessResult(result: R, consumerRecord: Vector[ConsumerRecord[K, V]]): ProcessResult[K, V] = new ProcessResult[K, V] {
-      override val id: UUID = UUID.randomUUID()
-      override val consumerRecords: Vector[ConsumerRecord[K, V]] = consumerRecord
+    def simpleProcessResult(consumerRecord: Vector[ConsumerRecord[K, V]]): ProcessResult[K, V] = new ProcessResult[K, V] {
+      override lazy val id: UUID = UUID.randomUUID()
+      override lazy val consumerRecords: Vector[ConsumerRecord[K, V]] = consumerRecord
     }
 
     override type A = ProcessResult[K, V]
     override def process(consumerRecords: Vector[ConsumerRecord[K, V]]): Future[ProcessResult[K, V]] = {
-      thiz.process.invoke(consumerRecords).map(x => simpleProcessResult(x, consumerRecords))
+      thiz.process.invoke(consumerRecords).map(_ => simpleProcessResult(consumerRecords))
     }
   }
 
@@ -117,7 +133,10 @@ trait ExpressKafka[K, V, R] extends ExpressConsumer[K, V] with ExpressProducer[K
 
   object Process {
     def apply(p: Vector[ConsumerRecord[K, V]] => R): Process = (consumerRecords: Vector[ConsumerRecord[K, V]]) => Future(p(consumerRecords))
+    def sync(p: Vector[ConsumerRecord[K, V]] => R): Process = apply(p)
     def async(p: Vector[ConsumerRecord[K, V]] => Future[R]): Process = (consumerRecords: Vector[ConsumerRecord[K, V]]) => p(consumerRecords)
+    def task(p: Vector[ConsumerRecord[K, V]] => Task[R]): Process = (consumerRecords: Vector[ConsumerRecord[K, V]]) => p(consumerRecords).runToFuture
+    def obs(p: Observable[ConsumerRecord[K, V]] => Task[R]): Process = (consumerRecords: Vector[ConsumerRecord[K, V]]) => p(Observable.fromIterable(consumerRecords)).runToFuture
   }
 
   def process: Process

@@ -19,7 +19,8 @@ import scala.language.{ implicitConversions, postfixOps }
 
 class ConsumerRunnerSpec extends TestBase {
 
-  implicit def executionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(5))
+  implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(5))
+  implicit val scheduler = monix.execution.Scheduler(ec)
 
   def processResult(_consumerRecords: Vector[ConsumerRecord[String, String]]) = new ProcessResult[String, String] {
     override val id: UUID = UUID.randomUUID()

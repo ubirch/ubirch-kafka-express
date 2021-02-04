@@ -13,7 +13,6 @@ import org.apache.kafka.common.errors.TimeoutException
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
-import scala.language.postfixOps
 import scala.util.{ Failure, Success }
 
 trait WithProcessRecords[K, V] {
@@ -36,7 +35,7 @@ trait WithProcessRecords[K, V] {
       finish()
     }
 
-    def processRecords(consumerRecords: Vector[ConsumerRecord[K, V]]) {
+    def processRecords(consumerRecords: Vector[ConsumerRecord[K, V]]) = {
       val processing = process(consumerRecords)
       processing.onComplete {
         case Success(_) =>
@@ -75,7 +74,7 @@ trait WithProcessRecords[K, V] {
 
     override protected val batchCountDownSize: Int = partitionRecordsSize
 
-    def start() {
+    def start() = {
       if (getDelaySingleRecord == 0.millis && getDelayRecords == 0.millis) {
         partitionRecords.foreach(x => processRecords(Vector(x)))
       } else {
@@ -93,7 +92,7 @@ trait WithProcessRecords[K, V] {
         postCommitCallback.run(partitionRecordsSize)
       } catch {
         case e: TimeoutException =>
-          throw CommitTimeoutException("Commit timed out", () => this.commitFunc(), e)
+          throw CommitTimeoutException("Commit timed out", () => { val _ = this.commitFunc() }, e)
         case e: Throwable =>
           throw e
       }
@@ -124,41 +123,21 @@ trait WithProcessRecords[K, V] {
 
     protected val batchCountDownSize: Int = 1
 
-    def start() {
+    def start() = {
       processRecords(consumerRecords.iterator().asScala.toVector)
       if (getDelayRecords > 0.millis) {
         FutureHelper.delay(getDelayRecords)(())
       }
     }
 
-    def commitFuncUpgraded(): Vector[Unit] = {
+    def commitFunc(): Vector[Unit] = {
 
       try {
         consumer.commitSync()
         postCommitCallback.run(consumerRecords.count())
       } catch {
         case e: TimeoutException =>
-          throw CommitTimeoutException("Commit timed out", () => this.commitFuncUpgraded(), e)
-        case e: Throwable =>
-          throw e
-      }
-
-    }
-
-    @deprecated("It makes commits slower. Do not use. Use commitFuncUpgraded. It will be removed soon.", "1.2.6")
-    def commitFunc(): Vector[Unit] = {
-
-      try {
-        consumerRecords.partitions().asScala.foreach { p =>
-          val partitionRecords = consumerRecords.records(p).asScala.toVector
-          val partitionRecordsSize = partitionRecords.size
-          val lastOffset = partitionRecords(partitionRecordsSize - 1).offset()
-          consumer.commitSync(Collections.singletonMap(p, new OffsetAndMetadata(lastOffset + 1)))
-        }
-        postCommitCallback.run(consumerRecords.count())
-      } catch {
-        case e: TimeoutException =>
-          throw CommitTimeoutException("Commit timed out", () => this.commitFunc(), e)
+          throw CommitTimeoutException("Commit timed out", () => { val _ = this.commitFunc() }, e)
         case e: Throwable =>
           throw e
       }
@@ -175,7 +154,7 @@ trait WithProcessRecords[K, V] {
         failed.set(None)
         throw error.get
       } else {
-        commitFuncUpgraded()
+        commitFunc()
       }
 
     }

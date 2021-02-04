@@ -5,9 +5,8 @@ import java.util.UUID
 import java.util.concurrent.atomic.{ AtomicBoolean, AtomicInteger, AtomicReference }
 
 import com.ubirch.kafka.util.Exceptions._
-import com.ubirch.kafka.util.{ Callback, Callback0, VersionedLazyLogging }
+import com.ubirch.kafka.util.{ Callback, Callback0, FutureHelper, VersionedLazyLogging }
 import com.ubirch.util.ShutdownableThread
-import com.ubirch.kafka.util.FutureHelper
 import monix.execution.Scheduler
 import org.apache.kafka.clients.consumer._
 import org.apache.kafka.common.TopicPartition
@@ -15,8 +14,8 @@ import org.apache.kafka.common.serialization.Deserializer
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConverters._
+import scala.concurrent.Future
 import scala.concurrent.duration.{ FiniteDuration, _ }
-import scala.concurrent.{ ExecutionContext, Future }
 import scala.language.postfixOps
 
 /**
@@ -31,13 +30,11 @@ import scala.language.postfixOps
   * @tparam K Represents the type of the Key for the consumer.
   * @tparam V Represents the type of the Value for the consumer.
   */
-abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionContext)
+abstract class ConsumerRunner[K, V](name: String)(implicit val scheduler: Scheduler)
   extends ShutdownableThread(name)
   with ConsumerRebalanceListener
   with WithProcessRecords[K, V]
   with VersionedLazyLogging {
-
-  implicit lazy val scheduler: Scheduler = monix.execution.Scheduler(ec)
 
   override val version: AtomicInteger = ConsumerRunner.version
   //This one is made public for testing purposes
@@ -160,7 +157,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
             }
           } finally {
             //this is in a try to guaranty its execution.
-            postConsumeCallback.run(totalPolledCount)
+            val _ = postConsumeCallback.run(totalPolledCount)
           }
 
           //This is a listener on other exception for when the consumer is not paused.
@@ -261,7 +258,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
 
     val pauseDuration = getPauseDuration.toMillis
 
-    val amortized = scala.math.pow(2, ps).toInt * pauseDuration
+    val amortized = scala.math.pow(2, ps.toDouble).toInt * pauseDuration
 
     FiniteDuration(amortized, MILLISECONDS)
 
@@ -384,7 +381,7 @@ abstract class ConsumerRunner[K, V](name: String)(implicit val ec: ExecutionCont
 object ConsumerRunner {
   val version: AtomicInteger = new AtomicInteger(0)
 
-  def fBased[K, V](f: Vector[ConsumerRecord[K, V]] => Future[ProcessResult[K, V]])(implicit executionContext: ExecutionContext): ConsumerRunner[K, V] = {
+  def fBased[K, V](f: Vector[ConsumerRecord[K, V]] => Future[ProcessResult[K, V]])(implicit scheduler: Scheduler): ConsumerRunner[K, V] = {
     new ConsumerRunner[K, V](name) {
       override def process(consumerRecords: Vector[ConsumerRecord[K, V]]): Future[ProcessResult[K, V]] = {
         f(consumerRecords)
@@ -392,15 +389,15 @@ object ConsumerRunner {
     }
   }
 
-  def controllerBased[K, V](controller: ConsumerRecordsController[K, V])(implicit ec: ExecutionContext): ConsumerRunner[K, V] = {
+  def controllerBased[K, V](controller: ConsumerRecordsController[K, V])(implicit scheduler: Scheduler): ConsumerRunner[K, V] = {
     val consumer = empty[K, V]
     consumer.setConsumerRecordsController(Some(controller))
     consumer
   }
 
-  def empty[K, V](implicit executionContext: ExecutionContext): ConsumerRunner[K, V] = new ConsumerRunner[K, V](name) {}
+  def empty[K, V](implicit scheduler: Scheduler): ConsumerRunner[K, V] = new ConsumerRunner[K, V](name) {}
 
-  def emptyWithMetrics[K, V](prefix: String, metricsSubNamespace: String)(implicit executionContext: ExecutionContext): ConsumerRunner[K, V] = {
+  def emptyWithMetrics[K, V](prefix: String, metricsSubNamespace: String)(implicit scheduler: Scheduler): ConsumerRunner[K, V] = {
     new ConsumerRunner[K, V](name) with WithMetrics {
       override def metricsSubNamespaceLabel: String = metricsSubNamespace
       override def prefixNamespace: String = prefix

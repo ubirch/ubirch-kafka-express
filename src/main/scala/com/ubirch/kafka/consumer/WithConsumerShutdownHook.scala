@@ -9,7 +9,7 @@ trait WithConsumerShutdownHook extends LazyLogging {
     () =>
       logger.info(s"Shutting down Consumer[timeout=$gracefulTimeout secs name=${consumerRunner.getName}] ...")
       if (Option(consumerRunner).isDefined)
-        Future.successful(consumerRunner.shutdown(gracefulTimeout, java.util.concurrent.TimeUnit.SECONDS))
+        Future.successful(consumerRunner.shutdown(gracefulTimeout.toLong, java.util.concurrent.TimeUnit.SECONDS))
       else Future.unit
   }
 }

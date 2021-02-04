@@ -78,15 +78,14 @@ abstract class ProducerRunner[K, V] extends VersionedLazyLogging {
       case e: Exception =>
         throw ProducerCreationException("Error Creating Producer", e.getMessage)
     } finally {
-      onPostProducerCreation.run(getProducerAsOpt)
+      val _ = onPostProducerCreation.run(getProducerAsOpt)
     }
 
   }
 
   def close(timout: FiniteDuration): Unit = {
-    getProducerAsOpt
+    val _ = getProducerAsOpt
       .map(_.close(java.time.Duration.ofMillis(timout.toMillis)))
-      .getOrElse(Unit)
   }
 
   def getProducerAsOpt: Option[Producer[K, V]] = producer
@@ -117,7 +116,7 @@ abstract class ProducerRunner[K, V] extends VersionedLazyLogging {
   }
 
   def sendWithCallback(record: ProducerRecord[K, V])(callback: Try[RecordMetadata] => Unit): Unit = {
-    getProducerOrCreate.send(record, producerCallback(callback))
+    val _ = getProducerOrCreate.send(record, producerCallback(callback))
   }
 
 }
