@@ -14,30 +14,30 @@ import scala.annotation.tailrec
 object PrometheusMetricsHelper extends LazyLogging {
 
   /**
-   * Simple and default connection backed up by the default registry
-   * @param port the port number to start the server on
-   * @param maxAttempts the number of retries for when there is a Connection problem.
-   *                    If not provided, 3 attempts will be performed
-   * @return the Prometheus Http Server
-   */
+    * Simple and default connection backed up by the default registry
+    * @param port the port number to start the server on
+    * @param maxAttempts the number of retries for when there is a Connection problem.
+    *                    If not provided, 3 attempts will be performed
+    * @return the Prometheus Http Server
+    */
   def default(port: Int, maxAttempts: Int = 3): HTTPServer = create(port, defaultCollectorRegistry, maxAttempts)
 
   /**
-   * Connection backed up by JMX registry. It will exports JMX values as Prometheus metrics.
-   * @param port the port number to start the server on
-   * @param maxAttempts the number of retries for when there is a Connection problem.
-   *                    If not provided, 3 attempts will be performed
-   * @return the Prometheus Http Server
-   */
+    * Connection backed up by JMX registry. It will exports JMX values as Prometheus metrics.
+    * @param port the port number to start the server on
+    * @param maxAttempts the number of retries for when there is a Connection problem.
+    *                    If not provided, 3 attempts will be performed
+    * @return the Prometheus Http Server
+    */
   def defaultWithJXM(port: Int, maxAttempts: Int = 3): HTTPServer = create(port, createCustomCollectorRegistry, maxAttempts)
 
   /**
-   * Represents a builder for the http server for prometheus
-   * @param port the port number to start the server on
-   * @param collectorRegistry the registry for the metrics
-   * @param maxAttempts the number of retries for when there is a Connection problem.
-   * @return the Prometheus Http Server
-   */
+    * Represents a builder for the http server for prometheus
+    * @param port the port number to start the server on
+    * @param collectorRegistry the registry for the metrics
+    * @param maxAttempts the number of retries for when there is a Connection problem.
+    * @return the Prometheus Http Server
+    */
   private final def create(port: Int, collectorRegistry: CollectorRegistry, maxAttempts: Int): HTTPServer = {
 
     @tailrec

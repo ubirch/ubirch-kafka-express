@@ -6,7 +6,7 @@
     <!-- basic info -->
     <groupId>com.ubirch</groupId>
     <artifactId>ubirch-kafka-express</artifactId>
-    <version>1.2.13-SNAPSHOT</version>
+    <version>1.2.14-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <description>Simple wrapper for starting a kafka consumer or producer very quickly</description>
     <url>https://ubirch.com</url>
@@ -34,7 +34,7 @@
         <connection>scm:git:git@github.com:ubirch/ubirch-kafka-express.git</connection>
         <developerConnection>scm:git:git@github.com:ubirch/ubirch-kafka-express.git</developerConnection>
         <url>https://github.com/ubirch/ubirch-kafka-express</url>
-        <tag>1.2.13-SNAPSHOT</tag>
+        <tag>1.2.14-SNAPSHOT</tag>
     </scm>
 
     <distributionManagement>
@@ -69,23 +69,24 @@
         <!-- versions -->
 
         <io.monix.version>3.1.0</io.monix.version>
-        <kafka-clients.version>2.3.0</kafka-clients.version>
-        <embedded-kafka>2.3.0</embedded-kafka>
-        <json4s-native.version>3.6.0</json4s-native.version>
-        <json4s-jackson.version>3.6.1</json4s-jackson.version>
-        <json4s-ext>3.6.0</json4s-ext>
+        <kafka-clients.version>3.3.2</kafka-clients.version>
+        <embedded-kafka>3.3.2</embedded-kafka>
+        <json4s-native.version>4.0.6</json4s-native.version>
+        <json4s-jackson.version>4.0.6</json4s-jackson.version>
+        <json4s-ext>4.0.6</json4s-ext>
 
         <scala.logging.version>3.9.0</scala.logging.version>
         <slf4j.api.version>1.7.15</slf4j.api.version>
         <logback-classic.version>1.2.3</logback-classic.version>
         <log4j-over-slf4j.version>1.7.25</log4j-over-slf4j.version>
         <jcl-over-slf4j.version>1.7.25</jcl-over-slf4j.version>
-        <logstash-logback-encoder.version>5.3</logstash-logback-encoder.version>
+        <logstash-logback-encoder.version>7.2</logstash-logback-encoder.version>
+
 
         <io.prometheus.simpleclient.version>0.6.0</io.prometheus.simpleclient.version>
         <io.prometheus.simpleclient_hotspot.version>0.6.0</io.prometheus.simpleclient_hotspot.version>
         <io.prometheus.simpleclient_httpserver.version>0.6.0</io.prometheus.simpleclient_httpserver.version>
-        <io.prometheus.simpleclient_logback.version>0.6.0</io.prometheus.simpleclient_logback.version>
+        <io.prometheus.simpleclient_logback.version>0.15.0</io.prometheus.simpleclient_logback.version>
         <io.prometheus.simpleclient_graphite_bridge.version>0.6.0</io.prometheus.simpleclient_graphite_bridge.version>
 
         <!-- plugins -->
@@ -201,7 +202,7 @@
         <dependency>
             <groupId>io.prometheus.jmx</groupId>
             <artifactId>collector</artifactId>
-            <version>0.13.0</version>
+            <version>0.17.2</version>
         </dependency>
 
         <!-- Prometheus -->
@@ -341,6 +342,12 @@
                 <configuration>
                     <skip>false</skip>
                 </configuration>
+            </plugin>
+            <!-- plugin to check for vulnerable dependencies; invoke by mvn org.owasp:dependency-check-maven:check -->
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>8.0.2</version>
             </plugin>
         </plugins>
     </build>
