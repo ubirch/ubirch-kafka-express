@@ -3,7 +3,6 @@ package com.ubirch.kafka.consumer
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{ CountDownLatch, TimeUnit }
-
 import com.ubirch.kafka.util.Exceptions._
 import com.ubirch.kafka.util.FutureHelper
 import com.ubirch.kafka.util.Implicits._
@@ -12,6 +11,7 @@ import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.errors.TimeoutException
 
 import scala.collection.JavaConverters._
+import scala.collection.convert.ImplicitConversions.`map AsScala`
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 
@@ -148,7 +148,7 @@ trait WithProcessRecords[K, V] {
       val error = failed.get()
       if (error.isDefined) {
         consumerRecords.partitions().asScala.foreach { p =>
-          val offset = Option(consumer.committed(p)).map(_.offset()).getOrElse(0L)
+          val offset = Option(consumer.committed(Set(p).asJava).get(p)).map(_.offset()).getOrElse(0L)
           consumer.seek(p, offset)
         }
         failed.set(None)
