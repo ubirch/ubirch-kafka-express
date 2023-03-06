@@ -21,7 +21,6 @@ class ConfigsSpec extends TestBase {
         ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG,
         ConsumerConfig.METADATA_MAX_AGE_CONFIG,
         ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
-        ConsumerConfig.ISOLATION_LEVEL_CONFIG,
         ConsumerConfig.FETCH_MAX_BYTES_CONFIG,
         ConsumerConfig.RECONNECT_BACKOFF_MS_CONFIG,
         ConsumerConfig.RECONNECT_BACKOFF_MAX_MS_CONFIG
