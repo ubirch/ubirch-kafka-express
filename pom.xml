@@ -69,6 +69,9 @@
         <!-- versions -->
 
         <io.monix.version>3.1.0</io.monix.version>
+        <!-- Since 0.10.0.0, Kafka has a "bidirectional" client compatibility policy.
+               https://kafka.apache.org/protocol#protocol_compatibility 
+        -->
         <kafka-clients.version>3.3.2</kafka-clients.version>
         <embedded-kafka>3.3.2</embedded-kafka>
         <json4s-native.version>4.0.6</json4s-native.version>
