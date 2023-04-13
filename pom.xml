@@ -72,8 +72,8 @@
         <!-- Since 0.10.0.0, Kafka has a "bidirectional" client compatibility policy.
                https://kafka.apache.org/protocol#protocol_compatibility 
         -->
-        <kafka-clients.version>3.3.2</kafka-clients.version>
-        <embedded-kafka>3.3.2</embedded-kafka>
+        <kafka-clients.version>2.3.0</kafka-clients.version>
+        <embedded-kafka>2.3.0</embedded-kafka>
         <json4s-native.version>4.0.6</json4s-native.version>
         <json4s-jackson.version>4.0.6</json4s-jackson.version>
         <json4s-ext>4.0.6</json4s-ext>

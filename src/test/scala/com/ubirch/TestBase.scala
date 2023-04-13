@@ -1,6 +1,6 @@
 package com.ubirch
 
-import io.github.embeddedkafka.EmbeddedKafka
+import net.manub.embeddedkafka.EmbeddedKafka
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, MustMatchers, WordSpec }
 

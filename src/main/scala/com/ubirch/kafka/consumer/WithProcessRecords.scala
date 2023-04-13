@@ -11,7 +11,6 @@ import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.errors.TimeoutException
 
 import scala.collection.JavaConverters._
-import scala.collection.convert.ImplicitConversions.`map AsScala`
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 
@@ -147,10 +146,9 @@ trait WithProcessRecords[K, V] {
     def finish(): Vector[Unit] = {
       val error = failed.get()
       if (error.isDefined) {
-        val partitionOffsets: java.util.Map[TopicPartition, OffsetAndMetadata] = consumer.committed(consumerRecords.partitions())
-        partitionOffsets.asScala.foreach {
-          case (p, null) => consumer.seek(p, 0L)
-          case (p, offset) => consumer.seek(p, offset)
+        consumerRecords.partitions().asScala.foreach { p =>
+          val offset = Option(consumer.committed(p)).map(_.offset()).getOrElse(0L)
+          consumer.seek(p, offset)
         }
         failed.set(None)
         throw error.get
