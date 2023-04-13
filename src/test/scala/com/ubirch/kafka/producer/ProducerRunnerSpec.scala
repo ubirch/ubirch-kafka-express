@@ -3,7 +3,7 @@ package com.ubirch.kafka.producer
 import com.ubirch.TestBase
 import com.ubirch.kafka.util.Exceptions.ProducerCreationException
 import com.ubirch.kafka.util.PortGiver
-import io.github.embeddedkafka.EmbeddedKafkaConfig
+import net.manub.embeddedkafka.EmbeddedKafkaConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.errors.InvalidTopicException
 import org.apache.kafka.common.serialization.StringSerializer

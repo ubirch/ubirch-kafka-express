@@ -7,7 +7,7 @@ import java.util.concurrent.{ CountDownLatch, Executors }
 import com.ubirch.TestBase
 import com.ubirch.kafka.util.Exceptions.{ CommitTimeoutException, NeedForPauseException }
 import com.ubirch.kafka.util.{ NameGiver, PortGiver }
-import io.github.embeddedkafka.EmbeddedKafkaConfig
+import net.manub.embeddedkafka.EmbeddedKafkaConfig
 import org.apache.kafka.clients.consumer.{ ConsumerRecord, ConsumerRecords, OffsetResetStrategy }
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.errors.TimeoutException
