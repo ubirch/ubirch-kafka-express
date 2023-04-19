@@ -216,6 +216,7 @@
             <groupId>io.github.embeddedkafka</groupId>
             <artifactId>embedded-kafka_${scala.compat.version}</artifactId>
             <version>${embedded-kafka}</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
